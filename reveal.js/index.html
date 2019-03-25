@@ -1,0 +1,349 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>reveal.js</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/moon.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section data-markdown>
+                    # Shell-skriptaus käytännössä
+                    UNIX-kerho 26.03.2019 (UNIXTIME 1553623200)
+
+                    https://github.com/unixkerho/shell-scripts
+
+                    Maks Turtiainen
+                </section>
+                <section data-markdown>
+                    ## POSIX-standardi
+                    - Ennen shelleihin menoa olisi hyvä tietää on olemassa standardi joka määrittelee (melko löyhästi) miten UNIX-tyyppisten käyttöjärjestelmien kuuluisi suunnilleen toimia
+                    - POSIX IEEE-standardi on tälläinen
+                    - Tämän vuoksi samat shell-skriptit yleensä toimivat Linuxilla, Mac OS:llä, *BSD:llä, Solariksella, Androidilla jne.
+                </section>
+                <section data-markdown>
+                    ## UNIX-shell
+                    - UNIX-shell on komentorivitulkki UNIX-tyyppisiin käyttöjärjestelmiin
+                    - Voi käyttää joko interaktiivisesti suoraan komentoriviltä tai suorittaa ennalta määrätyt komennot tiedostosta (skriptistä)
+                </section>
+                <section data-markdown>
+                    ## Eri shellit
+                    - Eri shellejä on paljon. Osa enemmän ja osa vähemmän POSIX-yhteensopivia. Useimmissa lisäominaisuuksia joita POSIX ei määrittele.
+                    - POSIX-yhteensopivia: Bash, ZSH, DASH, KornShell (ksh, mksh), FreeBSD sh
+                    - Muita: C shell (csh, tcsh), Fish
+                    - Keskitymme tässä lähinnä Bashiin, koska se on aika pitkälti suosituin
+                    - Käytössä olevan shellisi voit tarkistaa komennolla:
+                    ```
+                    echo $SHELL
+                    ```
+                </section>
+                <section data-markdown>
+                    ## Basics
+                    - Ensimmäinen rivi määrittelee käytettävän shellin. ns. "shebang-line"
+                    - Muuttujien määrittely `muuttuja=jotain`, viittaus `$muuttuja`
+                    - `if` päättyy `fi`:n ja `case` päättyy `esac`:n
+                    - Vertailuoperaattorit: `=`, `!=`, `-gt`, `-eq` (man test)
+                    - Komentoriviparametrit: `$1`, `$2`, `$3` ...
+                    - Kommentiksi tulkitaan kaikki `"#"` jälkeen
+                    - Putkitus `|` ja redirectaus `>`
+                    - https://en.wikipedia.org/wiki/List_of_Unix_commands
+                </section>
+                <section data-markdown>
+                    ## Ensimmäinen skripti
+                    ```
+                    touch ekaskripti.sh # luo tiedoston
+                    chmod +x ekaskripti.sh # antaa tiedostolle suoritusoikeuden
+                    $EDITOR ekaskripti.sh # avaa tiedoston oletuseditorilla
+                    ```
+                    ```
+                    #!/usr/bin/env bash
+                    echo "Moi!" # tulostus
+                    echo "Tässä tämän hakemiston tiedostot:"
+                    ls # listaa tiedostot tällä hakemistossa
+                    ```
+                    ```
+                    ./ekaskripti.sh # suorittaa skriptin
+                    ```
+                </section>
+                <section data-markdown>
+                    ## Ensimmäinen skripti
+                    ```
+                    #!/usr/bin/env bash
+                    echo "Moi!"
+                    printf "Haluatko listata tiedostot? (k/e) " # tulostus
+                    read -r VASTAUS # inputti muuttujaan
+                    if [ "$VASTAUS" = "k" ]; then
+                        echo "Listataan tiedostot"
+                        ls
+                    fi
+                    ```
+                    ```
+                    ./ekaskripti.sh
+                    ```
+                </section>
+                <section data-markdown>
+                    ## Parametrien/inputin parsiminen oikein
+                    ```
+                    #!/usr/bin/env bash
+                    # Esimerkki parametrien ja user inputin parsimiseen
+                    # Tehty UNIX-kerhoa varten
+
+                    # Funktio apujen tulostamiseen
+                    apua() {
+                        echo "1 parametri on pakollinen. Parametrit:"
+                        echo
+                        echo "--hakemisto       Suorittaa hakemistotyökalun"
+                        echo "--levytila        Näyttää levytilan tilanteen"
+                        echo "--help            Näyttää tämän aputekstin"
+                        echo
+                    }
+
+                    # Funktio hakemistotyökalulle
+                    hakemisto () {
+                        # User inputin parsiminen
+                        printf "Listaa tiedostot (l) vai laske paljon ne vievät tilaa (t) "
+                        read -r VASTAUS # inputti muuttujaan
+                        case $VASTAUS in
+                            l)
+                                echo "Tässä tämän hakemiston tiedostot:"
+                                ls
+                                exit 0 # 0:n palautus == "onnistui"
+                                ;;
+                            [tT]) # voi käyttää myös regexpiä jne.
+                                echo "Tämä hakemisto vie tämän verran tilaa:"
+                                du -sh .
+                                exit 0
+                                ;;
+                            *)
+                                echo -e "\\e[1;31mVirhe: odottamaton input\\e[0m"
+                                echo
+                                apua
+                                exit 1 # virhe: tulostaa avut ja palauttaa 1
+                                ;;
+                        esac
+                    }
+
+                    # Funktio levytilan näyttämiseen
+                    levytila() {
+                        echo "Levytilan tilanne"
+                        df -h
+                    }
+
+                    # Aloitus
+                    # Parametrien parsiminen
+                    if [ "$#" -ne 1 ]; then # parametreja täyty olla tasan 1
+                        apua
+                        exit 1 # Virhe: tulostetaan avut ja palautetaan 1
+                    else
+                        case "$1" in
+                            --hakemisto)
+                                hakemisto
+                                ;;
+                            --levytila)
+                                levytila
+                                exit 0
+                                ;;
+                            --help|-h)
+                                apua
+                                exit 0
+                                ;;
+                            *) # jos parametrit jotain muuta: avut ja virhe
+                                # Värejä
+                                echo -e "\\e[1;31mVirhe: tuntematon parametri \"${1}\"\\e[0m"
+                                echo
+                                apua
+                                exit 1
+                                ;;
+                        esac
+                    fi
+                    ```
+                    ```
+                    ./parametrit.sh --help
+                    ```
+                </section>
+                <section data-markdown>
+                    ## Käytännöllisiä onelinereita
+                    ```
+                    # Korvaa kaikista tiedostonimistä tässä hakemistossa " ":n "_":lla
+                    for f in * *; do mv "$f" "${f// /_}"; done
+                    ```
+                    ```
+                    # Sama mutta rekursiivisesti
+                    find . -name "* *" | awk '{ print length, $0 }' | sort -nr -s | cut -d" " -f2- | while read f; do base=$(basename "$f"); newbase="${base// /_}"; mv "$(dirname "$f")/$(basename "$f")" "$(dirname "$f")/$newbase"; done
+                    ```
+                    ```
+                    # Poista ylimääräiset tiedostot reposta
+                    git status --short | cut -d " " -f 3 | xargs rm
+                    ```
+                    ```
+                    # Random commit viesti
+                    git commit -m "$(w3m whatthecommit.com | head -n 1)"
+                    ```
+                    ```
+                    # Muunna kaikkien kuvien kokoa hakemistossa (imagemagick)
+                    for file in *.png; do convert $file -resize 32x32! 32-$file; done
+                    ```
+                    ```
+                    # Missä tiedostossa lukikaan "jotain"
+                    grep -r "jotain" .
+                    ```
+                    ```
+                    # Search-replace kaikista tiedostoista tästä hakemistosta ja alihakemistoista
+                    find /home/mjt/projekti -type f -print0 | xargs -0 sed -i 's/vasen/oikea/g'
+                    ```
+                    ```
+                    # Oikeudet turvallisemmaksi tässä ja alihakemistoissa
+                    find . -perm 777 -exec chmod 755 {} \;
+                    ```
+                </section>
+                <section data-markdown>
+                    ## Automatisointia ja muuta
+                    - Jotta toimisi perus komentoina skriptit oltava `$PATH`-muuttujan jossain hakemistossa
+                    ```
+                    mkdir ~/sh; echo 'export PATH=$PATH:~/sh' >> ~/.bashrc
+                    ```
+                    - Muita vaihtoehtoja: aliakset ja funktiot bashrc:ssä (`~/.bashrc`)
+                    ```
+                    # Vimistä PDF vieweri? (tämä .bashrc:n)
+                    function vimpdf () {
+                        pdftotext $1 temp.txt && vim temp.txt
+                    }
+                    ```
+                    ```
+                    # Lataa youtubesta mp3:na Tätä voi käyttää vaikka selaimen user skriptinä
+                    function joutube () {
+                        cd ~/musat
+                        youtube-dl --metadata-from-title "%(artist)s - %(title)s" --extract-audio --audio-format mp3 --add-metadata $1
+                    }
+                    ```
+                    ```
+                    # Tulostaa kaikki terminaalivärit
+                    alias colors='for code ({000..255}) print -P -- "$code: %F{$code}COLORS%f"'
+                    ```
+                    ```
+                    #!/usr/bin/env bash
+                    # Notifikaatio SSH:n yli
+                    ssh mjt@tp.turtia.org "tmux splitw 'zsh -c '\'' notify-send \"irssi\" \"Joku lähetti viestin!\" '\'' && mpv --quiet /home/mjt/ding.ogg'"
+                    ```
+                    ```
+                    # Tällä kertaa ei tarvitse edes vaivautua avaamaan .bashrc:tä
+                    # Wikipedia komentorivillä
+                    echo 'function wiki() { \n elinks -dump "https://fi.wikipedia.org/w/index.php?search=$1" | less \n}' >> ~/.bashrc
+                    ```
+                </section>
+                <section data-markdown>
+                    ## extract.sh
+                    Ei enää `tar --help`
+                    ```
+                    #!/usr/bin/env bash
+                    if [[ -f "$1" ]] ; then
+                       case $1 in
+                          *.tar.bz2)  tar         xjf   "$1";;
+                          *.tar.gz)   tar         xzf   "$1";;
+                          *.bz2)      bunzip2           "$1";;
+                          *.rar)      rar         x     "$1";;
+                          *.gz)       gunzip            "$1";;
+                          *.tar)      tar         xf    "$1";;
+                          *.tbz2)     tar         xjf   "$1";;
+                          *.tgz)      tar         xzf   "$1";;
+                          *.zip)      unzip             "$1";;
+                          *.Z)        uncompress        "$1";;
+                          *.tar.xz)   tar         xJf   "$1";;
+                          *.xz)       xz          -d    "$1";;
+                          *.7z)       p7zip       e     "$1";;
+                          *)          echo "'$1' cannot be extracted";;
+                       esac
+                    else
+                       echo "'$1' is not a valid file"
+                    fi
+                    ```
+                </section>
+                <section data-markdown>
+                    ## Laajennettavuus
+                    Lisää toiminnallisuutta muilla kielillä
+                    ```
+                    #!/usr/bin/env bash
+                    BASHVAR="Moi Bash"
+                    echo $BASHVAR
+                    python - << EOF
+                    pythonVar = "Moi Python"
+                    print pythonVar
+                    EOF
+                    echo "Moi taas Bash"
+                    ```
+                    Lisää toiminnallisuutta "käyttöliittymäkirjastoilla"
+                    ```
+                    #!/usr/bin/env bash
+                    OPTIONS="Lock\nReboot\nShutdown"
+                    LAUNCHER="rofi -width 30 -dmenu -i -p rofi-power:"
+                    option=`echo -e $OPTIONS | $LAUNCHER | tr -d '\r\n'`
+                    if [ ${#option} -gt 0 ]; then
+                        case $option in
+                        Lock) i3lock ;;
+                        Reboot) reboot ;;
+                        Shutdown) systemctl poweroff ;;
+                        *) ;;
+                       esac
+                    fi
+                    ```
+                </section>
+                <section data-markdown>
+                    ## Muuta
+                    - [Multithreadaava Bash-skripti?](https://github.com/mjturt/dotfiles/blob/master/scripts/sh/cdda)
+                    - https://github.com/mjturt/dotfiles/tree/master/scripts
+                    - Statusskriptit https://github.com/x70b1/polybar-scripts
+
+                    Isompia skriptejä
+                    - https://www.passwordstore.org/
+                    - https://github.com/mjturt/dotfiles/blob/master/install.sh
+
+                    Skriptit kuntoon (esim. Vim integraatio mahdollista)
+                    - https://www.shellcheck.net/
+                </section>
+                <section data-markdown>
+                    ## ???
+                    pacman -Qi | sed '/^Name/{ s/  *//; s/^.* //; H;N;d}; /^URL/,/^Build Date/d; /^Install Reason/,/^Description/d; /^  */d;x; s/^.*: ... //; s/Jan/01/;  s/Feb/02/;  s/Mar/03/;  s/Apr/04/;  s/May/05/;  s/Jun/06/;  s/Jul/07/;  s/Aug/08/; s/Sep/09/; s/Oct/10/;  s/Nov/11/;  s/Dec/12/; / [1-9]\{1\} /{ s/[[:digit:]]\{1\}/0&/3 }; s/\(^[[:digit:]][[:digit:]]\) \([[:digit:]][[:digit:]]\) \(.*\)\(....\)/\4-\1-\2 \3/' | sed ' /^[[:alnum:]].*$/ N; s/\n/ /; s/\(^[[:graph:]]*\) \(.*$\)/\2 \1/'
+                </section>
+                <section data-markdown>
+                    # Kiitos
+                </section>
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // More info about config & dependencies:
+            // - https://github.com/hakimel/reveal.js#configuration
+            // - https://github.com/hakimel/reveal.js#dependencies
+            Reveal.initialize({
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ],
+                width: "120%",
+                height: "120%"
+            });
+        </script>
+    </body>
+</html>

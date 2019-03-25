@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Ei enää tar --help
+# Author: Maks Turtiainen (https://github.com/mjturt/)
 if [[ -f "$1" ]]; then
    case $1 in
    *.tar.bz2) tar xjf "$1" ;;

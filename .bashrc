@@ -1,3 +1,5 @@
+# Author: Maks Turtiainen (https://github.com/mjturt/)
+
 # Vimistä PDF vieweri? (pdftotext ja vim täytyy olla asennettu)
 function vimpdf() {
     pdftotext $1 temp.txt && vim temp.txt

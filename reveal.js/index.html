@@ -34,14 +34,16 @@
                 </section>
                 <section data-markdown>
                     ## POSIX-standardi
-                    - Ennen shelleihin menoa olisi hyvä tietää on olemassa standardi joka määrittelee (melko löyhästi) miten UNIX-tyyppisten käyttöjärjestelmien kuuluisi suunnilleen toimia
+                    - Ennen shelleihin menoa olisi hyvä tietää on olemassa standardi joka määrittelee miten UNIX-tyyppisten käyttöjärjestelmien kuuluisi suunnilleen toimia
                     - POSIX IEEE-standardi on tälläinen
-                    - Tämän vuoksi samat shell-skriptit yleensä toimivat Linuxilla, Mac OS:llä, *BSD:llä, Solariksella, Androidilla jne.
+                    - Tämän vuoksi samat shell-skriptit yleensä toimivat Linuxeilla, Darwin-pohjaisilla(Mac OS, iOS), *BSD:llä, Solariksella, Androidilla, HP-UX:lla, IBM AIX:lla jne.
+                    - POSIX Windowsilla: Cygwin, MinGW, WSL (Windows Subsystem for Linux)
                 </section>
                 <section data-markdown>
                     ## UNIX-shell
                     - UNIX-shell on komentorivitulkki UNIX-tyyppisiin käyttöjärjestelmiin
                     - Voi käyttää joko interaktiivisesti suoraan komentoriviltä tai suorittaa ennalta määrätyt komennot tiedostosta (skriptistä)
+                    - Skriptien käyttökohteita: DevOps, asennusskriptit, automatisointi, tekstin parsiminen, simppelit ohjelmat
                 </section>
                 <section data-markdown>
                     ## Eri shellit
@@ -273,6 +275,35 @@
                     else
                        echo "'$1' is not a valid file"
                     fi
+                    ```
+                </section>
+                <section data-markdown>
+                    ## backup-to-gdrive.sh
+                    ```
+                    #!/usr/bin/env bash
+                    # Backuppaa koko home-kansiosi Google Driveen
+                    REMOTENAME="gdrive"
+                    FILENAME=$(date +%Y-%m-%d)-home-backup.tar.gz;
+                    # Pakataan koko home
+                    tar cvzf "$FILENAME" "$HOME"
+                    # Kryptataan välissä
+                    gpg -r user-id -e "$FILENAME"
+                    FILENAME=$FILENAME.gpg
+                    # Lähetetään gdriveen
+                    rclone copy "$FILENAME" "$REMOTENAME":backups
+                    # Poistetaan ylimääräinen pakkaus
+                    rm "$FILENAME"
+                    echo "Backupattu $HOME Google Driveen ($REMOTENAME:/backups/$FILENAME)"
+                    ```
+                </section>
+                <section data-markdown>
+                    ## git-apuri.sh
+                    ```
+                    #!/usr/bin/env bash
+                    # Nopeat commitit ja pushaus
+                    git add .
+                    git commit -m "$1"
+                    git push origin master
                     ```
                 </section>
                 <section data-markdown>

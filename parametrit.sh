@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Esimerkki parametrien ja user inputin parsimiseen
 # Tehty UNIX-kerhoa varten
+# Author: Maks Turtiainen (https://github.com/mjturt/)
 
 # Funktio apujen tulostamiseen
 apua() {
